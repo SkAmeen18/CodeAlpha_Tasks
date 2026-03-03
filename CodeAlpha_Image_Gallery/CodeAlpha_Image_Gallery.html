@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeAlpha | Responsive Image Gallery</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        
+        :root {
+            --primary: #941e1e;
+            --dark: #1e293b;
+            --light: #226cda;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--light);
+            color: var(--dark);
+            margin: 0;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .filter-wrapper {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            border: none;
+            background: #fff;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn.active, .filter-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .gallery-item {
+            position: relative;
+            height: 250px;
+            overflow: hidden;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        .gallery-item:hover img {
+            transform: scale(1.15);
+            filter: brightness(70%);
+        }
+
+        .lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .lightbox-img {
+            max-width: 90%;
+            max-height: 80vh;
+            border-radius: 4px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: none;
+            padding: 20px;
+            font-size: 30px;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        .prev { left: 20px; }
+        .next { right: 20px; }
+        .close { position: absolute; top: 20px; right: 30px; font-size: 40px; color: white; cursor: pointer; }
+
+        @media (max-width: 600px) {
+            .nav-btn { padding: 10px; font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Image Gallery</h1>
+        <p>responsive, filterable gallery project</p>
+    </header>
+
+    <div class="filter-wrapper">
+        <button class="filter-btn active" onclick="filterImages('all')">All Works</button>
+        <button class="filter-btn" onclick="filterImages('nature')">Nature</button>
+        <button class="filter-btn" onclick="filterImages('tech')">Technology</button>
+        <button class="filter-btn" onclick="filterImages('city')">Architecture</button>
+    </div>
+
+    <div class="gallery-grid" id="galleryGrid">
+        </div>
+
+    <div id="lightbox" class="lightbox">
+        <span class="close" onclick="closeLightbox()">&times;</span>
+        <button class="nav-btn prev" onclick="changeImage(-1)">&#10094;</button>
+        <img src="" class="lightbox-img" id="lightboxImg">
+        <button class="nav-btn next" onclick="changeImage(1)">&#10095;</button>
+    </div>
+
+    <script>
+        
+        const projectImages = [
+            { src: 'https://picsum.photos/id/10/800/600', cat: 'nature' },
+            { src: 'https://picsum.photos/id/1018/800/600', cat: 'nature' },
+            { src: 'https://picsum.photos/id/1/800/600', cat: 'tech' },
+            { src: 'https://picsum.photos/id/160/800/600', cat: 'tech' },
+            { src: 'https://picsum.photos/id/1031/800/600', cat: 'city' },
+            { src: 'https://picsum.photos/id/1033/800/600', cat: 'city' }
+        ];
+
+        let currentList = [...projectImages];
+        let currentIndex = 0;
+
+        function renderGallery(filter = 'all') {
+            const grid = document.getElementById('galleryGrid');
+            grid.innerHTML = '';
+            
+            currentList = filter === 'all' 
+                ? projectImages 
+                : projectImages.filter(img => img.cat === filter);
+
+            currentList.forEach((img, index) => {
+                const div = document.createElement('div');
+                div.className = 'gallery-item';
+                div.innerHTML = `<img src="${img.src}" alt="Project">`;
+                div.onclick = () => openLightbox(index);
+                grid.appendChild(div);
+            });
+        }
+
+        function filterImages(category) {
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.innerText.toLowerCase().includes(category)) btn.classList.add('active');
+            });
+            renderGallery(category);
+        }
+        function openLightbox(index) {
+            currentIndex = index;
+            document.getElementById('lightbox').style.display = 'flex';
+            updateLightboxContent();
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').style.display = 'none';
+        }
+
+        function changeImage(step) {
+            currentIndex += step;
+            if (currentIndex >= currentList.length) currentIndex = 0;
+            if (currentIndex < 0) currentIndex = currentList.length - 1;
+            updateLightboxContent();
+        }
+
+        function updateLightboxContent() {
+            document.getElementById('lightboxImg').src = currentList[currentIndex].src;
+        }
+        renderGallery();
+
+        document.getElementById('lightbox').addEventListener('click', (e) => {
+            if(e.target.id === 'lightbox') closeLightbox();
+        });
+    </script>
+</body>
+</html>
