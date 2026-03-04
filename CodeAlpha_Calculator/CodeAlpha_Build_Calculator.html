@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeAlpha | Scientific Glass Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(45deg, #0f0c29, #302b63, #24243e);
+            color: white;
+            overflow: hidden;
+        }
+
+        .wrapper {
+            display: flex;
+            gap: 20px;
+            z-index: 10;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 25px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.4);
+            width: 350px;
+            padding: 25px;
+        }
+
+        .history-panel {
+            width: 250px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            max-height: 520px;
+        }
+
+        .history-header {
+            text-align: center;
+            font-weight: 500;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 10px;
+        }
+
+        .history-list {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            background: rgba(255,255,255,0.02);
+            text-align: right;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .history-item:hover { background: rgba(255,255,255,0.08); }
+
+        #display {
+            width: 100%;
+            height: 90px;
+            background: rgba(0, 0, 0, 0.2);
+            border: none;
+            outline: none;
+            border-radius: 15px;
+            color: #fff;
+            font-size: 2.2rem;
+            text-align: right;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        button {
+            height: 60px;
+            border: none;
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            font-size: 1.1rem;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: 0.2s;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.18);
+            transform: translateY(-2px);
+        }
+
+        .operator { color: #ffb84d; background: rgba(255, 153, 0, 0.1); }
+        .sci { color: #4facfe; font-size: 0.9rem; }
+        .equals { 
+            grid-column: span 2; 
+            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); 
+            font-weight: 600; 
+        }
+        .clear { color: #ff4d4d; grid-column: span 2; background: rgba(255, 77, 77, 0.05); }
+
+        .bubble { position: absolute; z-index: -1; border-radius: 50%; filter: blur(60px); opacity: 0.3; }
+    </style>
+</head>
+<body>
+
+    <div class="bubble" style="width: 300px; height: 300px; top: -50px; left: -50px; background: #4facfe;"></div>
+    <div class="bubble" style="width: 400px; height: 400px; bottom: -100px; right: -50px; background: #00f2fe;"></div>
+
+    <div class="wrapper">
+        <div class="container">
+            <input type="text" id="display" placeholder="0" readonly>
+            <div class="buttons">
+                <button class="clear" onclick="clearDisplay()">AC</button>
+                <button class="operator" onclick="deleteLast()">DEL</button>
+                <button class="operator" onclick="append('/')">÷</button>
+
+                <button class="sci" onclick="sci('Math.sqrt')">√x</button>
+                <button class="sci" onclick="append('**')">xʸ</button>
+                <button class="sci" onclick="append('Math.PI')">π</button>
+                <button class="operator" onclick="append('*')">×</button>
+                
+                <button onclick="append('7')">7</button>
+                <button onclick="append('8')">8</button>
+                <button onclick="append('9')">9</button>
+                <button class="operator" onclick="append('-')">−</button>
+
+                <button onclick="append('4')">4</button>
+                <button onclick="append('5')">5</button>
+                <button onclick="append('6')">6</button>
+                <button class="operator" onclick="append('+')">+</button>
+
+                <button onclick="append('1')">1</button>
+                <button onclick="append('2')">2</button>
+                <button onclick="append('3')">3</button>
+                <button onclick="append('.')">.</button>
+
+                <button onclick="append('0')">0</button>
+                <button class="sci" onclick="append('%')">%</button>
+                <button class="equals" onclick="calculate()">=</button>
+            </div>
+        </div>
+
+        <div class="history-panel">
+            <div class="history-header">History</div>
+            <div class="history-list" id="historyList">
+                <p style="text-align: center; color: rgba(255,255,255,0.2); font-size: 0.8rem; margin-top: 20px;">Empty</p>
+            </div>
+            <button onclick="clearHistory()" style="height: 35px; font-size: 0.8rem; background: transparent; color: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.1);">Clear</button>
+        </div>
+    </div>
+
+    <script>
+        const display = document.getElementById('display');
+        const historyList = document.getElementById('historyList');
+        let history = [];
+
+        function append(input) {
+            if (display.value === "Error") clearDisplay();
+            
+            display.value += input;
+        }
+
+        function sci(func) {
+            display.value += func + "(";
+        }
+
+        function clearDisplay() { display.value = ""; }
+
+        function deleteLast() { display.value = display.value.slice(0, -1); }
+
+        function calculate() {
+            if (display.value === "") return;
+            const expression = display.value;
+            try {
+                let result = new Function('return ' + expression)();
+                let formattedResult = Number.isInteger(result) ? result : parseFloat(result.toFixed(8));
+                
+                addHistory(expression, formattedResult);
+                display.value = formattedResult;
+            } catch (error) {
+                display.value = "Error";
+                setTimeout(clearDisplay, 1500);
+            }
+        }
+
+        function addHistory(exp, res) {
+            
+            let prettyExp = exp.replace(/Math.PI/g, 'π').replace(/\*\*/g, '^').replace(/Math.sqrt\(/g, '√(');
+            history.unshift({ prettyExp, res });
+            updateHistoryUI();
+        }
+
+        function updateHistoryUI() {
+            if (history.length === 0) {
+                historyList.innerHTML = '<p style="text-align: center; color: rgba(255,255,255,0.2); font-size: 0.8rem; margin-top: 20px;">Empty</p>';
+                return;
+            }
+            historyList.innerHTML = history.map((item, index) => `
+                <div class="history-item" onclick="useHistory(${index})">
+                    <div style="color: rgba(255,255,255,0.4); font-size: 0.7rem;">${item.prettyExp}</div>
+                    <div style="font-weight: 500; font-size: 1rem;">${item.res}</div>
+                </div>
+            `).join('');
+        }
+
+        function useHistory(index) {
+            display.value = history[index].res;
+        }
+
+        function clearHistory() {
+            history = [];
+            updateHistoryUI();
+        }
+
+        
+        document.addEventListener('keydown', (e) => {
+            if (/[0-9.]/.test(e.key)) append(e.key);
+            else if (['+', '-', '*', '/'].includes(e.key)) append(e.key);
+            else if (e.key === 'Enter') { e.preventDefault(); calculate(); }
+            else if (e.key === 'Backspace') deleteLast();
+            else if (e.key === 'Escape') clearDisplay();
+        });
+    </script>
+</body>
+</html>
