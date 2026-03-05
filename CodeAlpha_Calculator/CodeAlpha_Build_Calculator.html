@@ -23,6 +23,8 @@
             gap: 20px;
             z-index: 10;
             padding: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .container {
@@ -32,7 +34,7 @@
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 25px 45px rgba(0, 0, 0, 0.4);
-            width: 350px;
+            width: 360px;
             padding: 25px;
         }
 
@@ -45,7 +47,7 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
-            max-height: 520px;
+            max-height: 600px;
         }
 
         .history-header {
@@ -75,31 +77,32 @@
 
         #display {
             width: 100%;
-            height: 90px;
+            height: 80px;
             background: rgba(0, 0, 0, 0.2);
             border: none;
             outline: none;
             border-radius: 15px;
             color: #fff;
-            font-size: 2.2rem;
+            font-size: 1.8rem;
             text-align: right;
             padding: 20px;
             margin-bottom: 20px;
             box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
         }
+
         .buttons {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
+            gap: 10px;
         }
 
         button {
-            height: 60px;
+            height: 55px;
             border: none;
             background: rgba(255, 255, 255, 0.08);
             color: #fff;
-            font-size: 1.1rem;
-            border-radius: 15px;
+            font-size: 1rem;
+            border-radius: 12px;
             cursor: pointer;
             transition: 0.2s;
             border-top: 1px solid rgba(255,255,255,0.1);
@@ -111,11 +114,12 @@
         }
 
         .operator { color: #ffb84d; background: rgba(255, 153, 0, 0.1); }
-        .sci { color: #4facfe; font-size: 0.9rem; }
+        .sci { color: #4facfe; font-size: 0.9rem; font-weight: 500; }
         .equals { 
-            grid-column: span 2; 
+            grid-column: span 4; 
             background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); 
             font-weight: 600; 
+            margin-top: 5px;
         }
         .clear { color: #ff4d4d; grid-column: span 2; background: rgba(255, 77, 77, 0.05); }
 
@@ -135,28 +139,31 @@
                 <button class="operator" onclick="deleteLast()">DEL</button>
                 <button class="operator" onclick="append('/')">÷</button>
 
+                <button class="sci" onclick="append('(')">(</button>
+                <button class="sci" onclick="append(')')">)</button>
                 <button class="sci" onclick="sci('Math.sqrt')">√x</button>
+                <button class="operator" onclick="append('*')">×</button>
+
                 <button class="sci" onclick="append('**')">xʸ</button>
                 <button class="sci" onclick="append('Math.PI')">π</button>
-                <button class="operator" onclick="append('*')">×</button>
+                <button class="sci" onclick="append('%')">%</button>
+                <button class="operator" onclick="append('-')">−</button>
                 
                 <button onclick="append('7')">7</button>
                 <button onclick="append('8')">8</button>
                 <button onclick="append('9')">9</button>
-                <button class="operator" onclick="append('-')">−</button>
+                <button class="operator" onclick="append('+')">+</button>
 
                 <button onclick="append('4')">4</button>
                 <button onclick="append('5')">5</button>
                 <button onclick="append('6')">6</button>
-                <button class="operator" onclick="append('+')">+</button>
+                <button onclick="append('.')">.</button>
 
                 <button onclick="append('1')">1</button>
                 <button onclick="append('2')">2</button>
                 <button onclick="append('3')">3</button>
-                <button onclick="append('.')">.</button>
-
                 <button onclick="append('0')">0</button>
-                <button class="sci" onclick="append('%')">%</button>
+
                 <button class="equals" onclick="calculate()">=</button>
             </div>
         </div>
@@ -166,7 +173,7 @@
             <div class="history-list" id="historyList">
                 <p style="text-align: center; color: rgba(255,255,255,0.2); font-size: 0.8rem; margin-top: 20px;">Empty</p>
             </div>
-            <button onclick="clearHistory()" style="height: 35px; font-size: 0.8rem; background: transparent; color: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.1);">Clear</button>
+            <button onclick="clearHistory()" style="height: 35px; font-size: 0.8rem; background: transparent; color: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.1); margin-top: 10px;">Clear History</button>
         </div>
     </div>
 
@@ -177,11 +184,11 @@
 
         function append(input) {
             if (display.value === "Error") clearDisplay();
-            
             display.value += input;
         }
 
         function sci(func) {
+            if (display.value === "Error") clearDisplay();
             display.value += func + "(";
         }
 
@@ -193,7 +200,11 @@
             if (display.value === "") return;
             const expression = display.value;
             try {
+                // Using new Function is safer than eval() but still powerful
                 let result = new Function('return ' + expression)();
+                
+                if (result === Infinity || isNaN(result)) throw new Error("Math Error");
+
                 let formattedResult = Number.isInteger(result) ? result : parseFloat(result.toFixed(8));
                 
                 addHistory(expression, formattedResult);
@@ -205,9 +216,14 @@
         }
 
         function addHistory(exp, res) {
+            // Clean up the JS syntax for the UI
+            let prettyExp = exp
+                .replace(/Math.PI/g, 'π')
+                .replace(/\*\*/g, '^')
+                .replace(/Math.sqrt\(/g, '√(');
             
-            let prettyExp = exp.replace(/Math.PI/g, 'π').replace(/\*\*/g, '^').replace(/Math.sqrt\(/g, '√(');
             history.unshift({ prettyExp, res });
+            if (history.length > 10) history.pop(); // Keep history manageable
             updateHistoryUI();
         }
 
@@ -233,10 +249,10 @@
             updateHistoryUI();
         }
 
-        
+        // Keyboard Support
         document.addEventListener('keydown', (e) => {
             if (/[0-9.]/.test(e.key)) append(e.key);
-            else if (['+', '-', '*', '/'].includes(e.key)) append(e.key);
+            else if (['+', '-', '*', '/', '(', ')'].includes(e.key)) append(e.key);
             else if (e.key === 'Enter') { e.preventDefault(); calculate(); }
             else if (e.key === 'Backspace') deleteLast();
             else if (e.key === 'Escape') clearDisplay();
